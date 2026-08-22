@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FName Generator Dashboard</title>
+<style>
+
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f4f6f8;margin:0;padding:28px;color:#222}
+.container{max-width:1100px;margin:auto;background:#fff;padding:26px;border-radius:16px;box-shadow:0 5px 25px rgba(0,0,0,.08)}
+h1{margin:0 0 8px}.sub{color:#666;margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.field label,.section>label{display:block;font-weight:700;margin-bottom:7px}
+input[type=number],select{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px}
+.section{margin-top:22px}.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
+.checks label{font-weight:400;background:#f8f8f8;padding:9px;border-radius:7px}
+button{padding:11px 16px;border:0;border-radius:8px;background:#222;color:#fff;cursor:pointer;margin:5px 6px 0 0}
+button.secondary{background:#666}
+#output{margin-top:10px;background:#f7f7f7;border:1px solid #e5e5e5;padding:12px;border-radius:10px;min-height:220px}
+.result-line{display:block;padding:8px 5px;border-bottom:1px solid #e5e5e5;font-family:Consolas,monospace}
+.hint,.status{font-size:13px;color:#666;margin-top:7px}
+
+
+:root{--app-bg:#f3f6fb;--app-card:#fff;--app-text:#172033;--app-muted:#667085;--app-line:#dfe4ea;--sidebar:#172033;--sidebar-hover:#263449;--accent:#2563eb}
+body.dark{--app-bg:#111827;--app-card:#1f2937;--app-text:#f9fafb;--app-muted:#a8b0bf;--app-line:#374151;--sidebar:#0b1220;--sidebar-hover:#1d2939;--accent:#60a5fa}
+body{background:var(--app-bg)!important;color:var(--app-text)!important;padding:0!important}
+#loginPage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#111827,#334155)}
+.login-card{width:min(420px,100%);background:#fff;color:#172033;padding:32px;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card h1{text-align:center;margin:0 0 8px}.login-card p{text-align:center;color:#667085}.login-card label{display:block;font-weight:bold;margin-top:12px}.login-card input{width:100%;padding:12px;margin-top:7px;border:1px solid #d0d5dd;border-radius:9px}.login-card button{width:100%;margin-top:16px;background:#2563eb}.login-error{min-height:20px;color:#dc2626;font-size:13px;margin-top:8px}
+#app{display:none;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:245px;background:var(--sidebar);padding:22px 14px;color:#fff;z-index:10}.brand{font-size:22px;font-weight:bold;padding:7px 10px 25px}.nav-btn{width:100%;background:transparent!important;text-align:left;color:#cbd5e1!important;margin:3px 0!important;padding:12px 14px!important}.nav-btn.active,.nav-btn:hover{background:var(--sidebar-hover)!important;color:#fff!important}.logout{position:absolute;left:14px;right:14px;bottom:18px;background:#b42318!important}
+.main{margin-left:245px;padding:28px;max-width:1450px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.page{display:none}.page.active{display:block}.dashboard-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}.stat-card,.dashboard-panel,.history-panel,.settings-panel{background:var(--app-card);border:1px solid var(--app-line);border-radius:15px;padding:20px}.stat-card small,.muted{color:var(--app-muted)}.stat-card b{font-size:30px;display:block;margin-top:8px}.generator-container{max-width:1100px;margin:0;background:var(--app-card);padding:26px;border-radius:16px;box-shadow:0 5px 25px rgba(0,0,0,.08);color:var(--app-text)}
+.generator-container .sub,.generator-container .hint,.generator-container .status{color:var(--app-muted)!important}.generator-container .checks label{background:var(--app-bg)!important;color:var(--app-text)}.generator-container input[type=number],.generator-container select{background:var(--app-card);color:var(--app-text);border-color:var(--app-line)}.generator-container #output{background:var(--app-bg);border-color:var(--app-line)}.generator-container .result-line{border-color:var(--app-line)}
+.history-item{padding:15px 0;border-bottom:1px solid var(--app-line)}.history-item:last-child{border-bottom:0}.settings-panel{max-width:600px}.settings-panel input{width:100%;padding:11px;border:1px solid var(--app-line);border-radius:8px;margin:8px 0 14px;background:var(--app-bg);color:var(--app-text)}
+@media(max-width:760px){.sidebar{width:72px;padding:14px 7px}.brand{font-size:0}.brand:after{content:"⚡";font-size:25px}.nav-btn{font-size:0!important;text-align:center!important}.nav-btn:before{content:attr(data-icon);font-size:19px}.logout{font-size:0!important}.logout:before{content:"🚪";font-size:18px}.main{margin-left:72px;padding:17px}.generator-container{padding:17px}}
+
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-card">
+    <h1>⚡ FName Generator</h1>
+    <p>Login to access your dashboard</p>
+    <label>Username</label>
+    <input id="loginUsername" placeholder="Enter username">
+    <label>Password</label>
+    <input id="loginPassword" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
+    <div class="login-error" id="loginError"></div>
+    <button onclick="login()">LOGIN</button>
+    <p style="font-size:12px">Demo: <b>admin</b> / <b>Admin@123</b></p>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">⚡ FName Generator</div>
+    <button class="nav-btn active" data-icon="🏠" onclick="showPage('dashboard',this)">🏠 Dashboard</button>
+    <button class="nav-btn" data-icon="🎲" onclick="showPage('generatorPage',this)">🎲 Generator</button>
+    <button class="nav-btn" data-icon="📜" onclick="showPage('historyPage',this);renderHistory()">📜 History</button>
+    <button class="nav-btn" data-icon="⚙️" onclick="showPage('settingsPage',this)">⚙️ Settings</button>
+    <button class="logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div><h1 id="pageTitle">Dashboard</h1><div class="muted" id="welcome">Welcome, Admin 👋</div></div>
+      <button class="secondary" onclick="toggleTheme()">🌙 / ☀️ Theme</button>
+    </div>
+
+    <section id="dashboard" class="page active">
+      <div class="dashboard-cards">
+        <div class="stat-card"><small>Total Generated</small><b id="totalGenerated">0</b></div>
+        <div class="stat-card"><small>Today's Generated</small><b id="todayGenerated">0</b></div>
+        <div class="stat-card"><small>Saved Batches</small><b id="batchCount">0</b></div>
+      </div>
+      <div class="dashboard-panel" style="margin-top:18px">
+        <h2>Quick Start</h2>
+        <p class="muted">Your existing alias generator is available inside the Generator section.</p>
+        <button onclick="showPage('generatorPage',document.querySelectorAll('.nav-btn')[1])">Go to Generator →</button>
+      </div>
+    </section>
+
+    <section id="generatorPage" class="page">
+      
+<div class="generator-container">
+<h1>From Name / Alias Generator</h1>
+<p class="sub">Generate unique 5–30 character aliases using meaningful, random, or mixed vocabulary.</p>
+
+<div class="grid">
+<div class="field"><label>Quantity</label><input id="qty" type="number" min="1" max="500" value="15"></div>
+<div class="field"><label>Minimum Length</label><input id="minLen" type="number" min="5" max="30" value="5"></div>
+<div class="field"><label>Maximum Length</label><input id="maxLen" type="number" min="5" max="30" value="30"></div>
+<div class="field"><label>Similarity</label>
+<select id="similarity">
+<option value="strict">Strict</option>
+<option value="medium" selected>Medium</option>
+<option value="loose">Loose</option>
+</select>
+</div>
+</div>
+
+<div class="section">
+<label>Character Options</label>
+<div class="checks">
+<label><input id="upper" type="checkbox" checked> Uppercase</label>
+<label><input id="lower" type="checkbox" checked> Lowercase</label>
+<label><input id="numbers" type="checkbox" checked> Numbers</label>
+</div>
+</div>
+
+<div class="section">
+<label>Generation Type</label>
+<div class="checks">
+<label><input id="meaningful" type="checkbox" checked> Meaningful</label>
+<label><input id="random" type="checkbox" checked> Non-meaningful</label>
+<label><input id="mixed" type="checkbox" checked> Mixed</label>
+</div>
+</div>
+
+<div class="section">
+<label>Field Words — Optional</label>
+<div class="checks" id="fields"></div>
+<div class="hint">Select one or more fields. If none are selected, general vocabulary is used.</div>
+</div>
+
+<div class="section">
+<button onclick="generate()">GENERATE</button>
+<button class="secondary" onclick="copyAll()">COPY ALL</button>
+<button class="secondary" onclick="downloadCSV()">DOWNLOAD CSV</button>
+<button class="secondary" onclick="clearOutput()">CLEAR</button>
+<div id="status" class="status"></div>
+</div>
+
+<div class="section">
+<label>Generated Strings</label>
+<div id="output">Click GENERATE...</div>
+</div>
+</div>
+
+
+    </section>
+
+    <section id="historyPage" class="page">
+      <div class="history-panel"><h2>Generation History</h2><div id="historyList"></div>
+      <button class="secondary" onclick="clearHistory()">Clear History</button></div>
+    </section>
+
+    <section id="settingsPage" class="page">
+      <div class="settings-panel">
+        <h2>Settings</h2>
+        <label>Display Name</label>
+        <input id="displayName" value="Admin">
+        <button onclick="saveSettings()">Save Settings</button>
+        <p class="muted">This is a simple frontend demo login. Credentials are not secure because the site is static.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+
+const DEMO_USER="admin";
+const DEMO_PASSWORD="Admin@123";
+
+function login(){
+  if(document.getElementById("loginUsername").value===DEMO_USER &&
+     document.getElementById("loginPassword").value===DEMO_PASSWORD){
+    localStorage.setItem("fnameLoggedIn","yes"); startApp();
+  } else document.getElementById("loginError").textContent="Invalid username or password.";
+}
+function startApp(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").style.display="block";
+  if(localStorage.getItem("fnameTheme")==="dark")document.body.classList.add("dark");
+  const name=localStorage.getItem("fnameDisplayName")||"Admin";
+  document.getElementById("displayName").value=name;
+  document.getElementById("welcome").textContent=`Welcome, ${name} 👋`;
+  updateStats();
+}
+function logout(){localStorage.removeItem("fnameLoggedIn");location.reload();}
+if(localStorage.getItem("fnameLoggedIn")==="yes")setTimeout(startApp,0);
+
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  document.getElementById("pageTitle").textContent=
+    id==="generatorPage"?"Generator":id==="historyPage"?"History":id==="settingsPage"?"Settings":"Dashboard";
+}
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("fnameTheme",document.body.classList.contains("dark")?"dark":"light");
+}
+function saveSettings(){
+  const n=document.getElementById("displayName").value.trim()||"Admin";
+  localStorage.setItem("fnameDisplayName",n);
+  document.getElementById("welcome").textContent=`Welcome, ${n} 👋`;
+  alert("Settings saved!");
+}
+function getHistory(){return JSON.parse(localStorage.getItem("fnameHistory")||"[]");}
+function saveHistory(){
+  if(!results||!results.length)return;
+  const h=getHistory();
+  h.unshift({date:new Date().toLocaleString(),count:results.length,items:[...results]});
+  localStorage.setItem("fnameHistory",JSON.stringify(h.slice(0,50)));
+}
+function renderHistory(){
+  const h=getHistory(), box=document.getElementById("historyList");
+  box.innerHTML=h.length?h.map(x=>`<div class="history-item"><b>${x.count} Strings</b><div class="muted">${x.date}</div><div class="muted">${x.items.slice(0,6).join(" • ")}${x.items.length>6?" ...":""}</div></div>`).join(""):'<p class="muted">No history yet.</p>';
+}
+function clearHistory(){localStorage.removeItem("fnameHistory");renderHistory();updateStats();}
+function updateStats(){
+  const h=getHistory();
+  const total=h.reduce((a,x)=>a+x.count,0);
+  const today=new Date().toLocaleDateString();
+  const todayTotal=h.filter(x=>new Date(x.date).toLocaleDateString()===today).reduce((a,x)=>a+x.count,0);
+  document.getElementById("totalGenerated").textContent=total;
+  document.getElementById("todayGenerated").textContent=todayTotal;
+  document.getElementById("batchCount").textContent=h.length;
+}
+
+
+
+const fieldWords={
+Industrial:["Industrial","Steel","Plant","Forge","Fabric","Works","Metal","Machine","Factory","Process"],
+Finance:["Finance","Capital","Credit","Fund","Wealth","Ledger","Asset","Market","Equity","Vault"],
+Technology:["Tech","Digital","Cloud","Logic","Nexus","Cyber","Data","Pixel","System","Core"],
+Biological:["Bio","Cell","Genome","Flora","Vital","Genetic","Life","Molecular","Organic","Genome"],
+Medical:["Med","Health","Care","Clinic","Thera","Wellness","Vital","Medic","Life","Health"],
+Energy:["Power","Solar","Volt","Energy","Grid","Spark","Fuel","Current","Charge","Watt"],
+Scientific:["Lab","Quantum","Atom","Vector","Science","Nova","Molecular","Research","Theory","Orbit"],
+Engineering:["Engine","Core","Build","Mech","Design","Struct","Motion","Works","Tech","Forge"],
+Agriculture:["Agro","Farm","Crop","Terra","Harvest","Green","Grain","Field","Grow","Seed"],
+Logistics:["Cargo","Fleet","Transit","Route","Move","Supply","Track","Ship","Port","Flow"]
+};
+
+const generalWords=[
+"Bright","Nova","Cloud","River","Swift","Forge","Logic","Vital","Orbit","Vector",
+"Prime","Vertex","Fusion","Matrix","Pulse","Core","Vision","Motion","Nexus","Spark",
+"Global","Summit","Urban","Metro","Alpha","Delta","Quantum","Atlas","Lumen","Astra"
+];
+
+const syllables=["qa","ve","ri","xo","lu","ne","za","mi","ko","ty","ra","vo","xi","en","zu","pa","do","ke","wy","no"];
+let results=[];
+
+const fieldBox=document.getElementById("fields");
+Object.keys(fieldWords).forEach(name=>{
+fieldBox.innerHTML+=`<label><input type="checkbox" value="${name}"> ${name}</label>`;
+});
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function useUpper(){return document.getElementById("upper").checked}
+function useLower(){return document.getElementById("lower").checked}
+function useNumbers(){return document.getElementById("numbers").checked}
+
+function selectedWords(){
+const selected=[...fieldBox.querySelectorAll("input:checked")].map(x=>x.value);
+return selected.length?selected.flatMap(x=>fieldWords[x]):generalWords.slice();
+}
+
+function applyCase(s){
+if(useUpper()&&!useLower())return s.toUpperCase();
+if(useLower()&&!useUpper())return s.toLowerCase();
+return s;
+}
+
+function numberPart(){
+return String(Math.floor(10+Math.random()*99990));
+}
+
+function randomToken(min,max){
+const len=Math.floor(min+Math.random()*(max-min+1));
+let s="";
+while(s.length<len)s+=rand(syllables);
+s=s.slice(0,len);
+return applyCase(s);
+}
+
+/* Generates a meaningful string by combining whole words.
+   It deliberately builds up to the requested minimum before adding numbers. */
+function makeMeaningful(min,max){
+const words=selectedWords();
+for(let attempt=0;attempt<200;attempt++){
+let pool=words.slice();
+let parts=[];
+let target=min;
+while(parts.join("").length<target && parts.length<6){
+let w=rand(pool);
+parts.push(w);
+}
+let s=parts.join("");
+
+if(useNumbers() && s.length<max){
+let n=numberPart();
+let maxDigits=Math.min(5,max-s.length);
+if(maxDigits>0 && Math.random()<0.9)s+=n.slice(0,maxDigits);
+}
+
+s=applyCase(s);
+
+if(s.length>=min && s.length<=max)return s;
+
+/* If words overshoot max, retry rather than producing a truncated word. */
+}
+return null;
+}
+
+/* Mixed = meaningful word(s) + random token + optional number. */
+function makeMixed(min,max){
+const words=selectedWords();
+for(let attempt=0;attempt<200;attempt++){
+let s=rand(words);
+let second=rand(words);
+
+/* Add a second meaningful word when needed. */
+if(s.length<min)s+=second;
+
+/* Add a short random component. */
+let remaining=max-s.length;
+if(remaining>=2){
+let tokenLen=Math.min(6,remaining);
+s+=randomToken(tokenLen,tokenLen);
+}
+
+if(useNumbers() && s.length<max){
+let n=numberPart().slice(0,Math.min(4,max-s.length));
+s+=n;
+}
+
+s=applyCase(s);
+if(s.length>=min&&s.length<=max)return s;
+}
+return null;
+}
+
+function makeRandom(min,max){
+return randomToken(min,max);
+}
+
+/* Similarity is deliberately moderate:
+   shared field words do not automatically make strings invalid. */
+function similarity(a,b){
+const A=a.toLowerCase(),B=b.toLowerCase();
+const prefixLen=Math.min(4,A.length,B.length);
+let prefixSame=0;
+for(let i=0;i<prefixLen;i++)if(A[i]===B[i])prefixSame++;
+
+const setA=new Set(A),setB=new Set(B);
+let common=0;
+for(const c of setA)if(setB.has(c))common++;
+const overlap=common/Math.max(setA.size,setB.size);
+
+return (prefixSame/Math.max(1,prefixLen))*0.30+overlap*0.70;
+}
+
+function acceptable(s){
+if(!s||results.includes(s))return false;
+const mode=document.getElementById("similarity").value;
+const threshold=mode==="strict"?0.74:mode==="medium"?0.86:0.94;
+return results.every(x=>similarity(s,x)<threshold);
+}
+
+function escapeHtml(s){
+return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function generate(){
+const qty=Number(document.getElementById("qty").value);
+const min=Number(document.getElementById("minLen").value);
+const max=Number(document.getElementById("maxLen").value);
+const status=document.getElementById("status");
+
+if(!Number.isInteger(qty)||qty<1||qty>500){
+alert("Quantity must be between 1 and 500.");return;
+}
+if(min<5||max>30||min>max){
+alert("Length must be between 5 and 30, and Min must not exceed Max.");return;
+}
+
+const types=[];
+if(document.getElementById("meaningful").checked)types.push("meaningful");
+if(document.getElementById("random").checked)types.push("random");
+if(document.getElementById("mixed").checked)types.push("mixed");
+if(!types.length){alert("Select at least one generation type.");return;}
+
+results=[];
+let attempts=0;
+const maxAttempts=Math.max(10000,qty*500);
+
+while(results.length<qty&&attempts<maxAttempts){
+attempts++;
+const type=rand(types);
+let s=null;
+
+if(type==="meaningful")s=makeMeaningful(min,max);
+else if(type==="mixed")s=makeMixed(min,max);
+else s=makeRandom(min,max);
+
+if(s&&s.length>=min&&s.length<=max&&acceptable(s))results.push(s);
+}
+
+document.getElementById("output").innerHTML=results.map(x=>
+`<div class="result-line">${escapeHtml(x)}</div>`
+).join("");
+
+status.textContent=`Generated ${results.length} of ${qty} strings.`;
+
+if(results.length<qty){
+alert(`Generated ${results.length} of ${qty}. Try Medium/Loose similarity or a wider length range.`);
+}
+saveHistory(); updateStats();
+}
+
+function copyAll(){
+if(!results.length){alert("Generate strings first.");return;}
+navigator.clipboard.writeText(results.join("\n"))
+.then(()=>alert("Copied!"))
+.catch(()=>alert("Browser blocked clipboard access. Select the output and copy manually."));
+}
+
+function downloadCSV(){
+if(!results.length){alert("Generate strings first.");return;}
+const csv="FromName\n"+results.map(x=>`"${x.replaceAll('"','""')}"`).join("\n");
+const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="from-name-aliases.csv";
+a.click();
+setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+
+function clearOutput(){
+results=[];
+document.getElementById("output").textContent="Click GENERATE...";
+document.getElementById("status").textContent="";
+}
+
+</script>
+</body>
+</html>
